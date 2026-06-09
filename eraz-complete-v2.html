@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERAZ — Wear History</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --stone: #2C2416;
+    --earth: #5C4A2A;
+    --sand: #C8A96E;
+    --parchment: #F2E8D0;
+    --pale: #FAF5EA;
+    --ash: #8C7B65;
+    --charcoal: #1A1410;
+    --accent: #8B4513;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--charcoal);
+    color: var(--parchment);
+    font-family: 'EB Garamond', serif;
+    overflow-x: hidden;
+  }
+
+  /* ── PAGE SYSTEM ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5rem 4rem;
+    background: rgba(26,20,16,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(200,169,110,0.15);
+  }
+  .nav-logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.3em;
+    color: var(--sand);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ash);
+    text-decoration: none;
+    transition: color 0.3s;
+    cursor: pointer;
+  }
+  .nav-links a:hover, .nav-links a.active-link { color: var(--sand); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-cta {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid var(--sand);
+    color: var(--sand);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .nav-cta:hover { background: var(--sand); color: var(--charcoal); }
+  .cart-icon {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--ash);
+    cursor: pointer;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .cart-icon:hover { color: var(--sand); }
+  .cart-count {
+    position: absolute; top: -6px; right: -8px;
+    background: var(--sand); color: var(--charcoal);
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    font-size: 0.55rem;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif;
+  }
+
+  /* Mobile hamburger */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column; gap: 5px; cursor: pointer; padding: 4px;
+  }
+  .nav-hamburger span {
+    display: block; width: 22px; height: 1px;
+    background: var(--sand); transition: all 0.3s;
+  }
+  .mobile-menu {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26,20,16,0.98); z-index: 99;
+    flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a {
+    font-family: 'Cinzel', serif; font-size: 1.2rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--ash); text-decoration: none; cursor: pointer;
+    transition: color 0.3s;
+  }
+  .mobile-menu a:hover { color: var(--sand); }
+  .mobile-close {
+    position: absolute; top: 1.5rem; right: 2rem;
+    font-size: 1.5rem; color: var(--ash); cursor: pointer;
+    font-family: 'Cinzel', serif;
+  }
+
+  /* ── SHARED ── */
+  .btn-primary {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 1rem 2.5rem;
+    background: var(--sand);
+    color: var(--charcoal);
+    border: none; cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { background: var(--parchment); transform: translateY(-2px); }
+  .btn-outline {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 1rem 2.5rem;
+    background: transparent;
+    color: var(--parchment);
+    border: 1px solid rgba(200,169,110,0.4);
+    cursor: pointer; transition: all 0.3s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-outline:hover { border-color: var(--sand); color: var(--sand); }
+  .section-divider {
+    width: 100%; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(200,169,110,0.4), transparent);
+  }
+  .reveal {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+  .section-header { text-align: center; margin-bottom: 4rem; }
+  .section-header .label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem; letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 1rem; display: block;
+  }
+  .section-header h2 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 600; color: var(--parchment);
+  }
+  .page-hero {
+    min-height: 30vh; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding-top: 100px;
+    background: linear-gradient(to bottom, var(--stone), var(--charcoal));
+  }
+  .page-hero-label {
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.5em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 1rem; display: block;
+  }
+  .page-hero-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    color: var(--parchment);
+    text-shadow: 0 0 60px rgba(200,169,110,0.2);
+  }
+
+  /* ═══════════════════════════════
+     HOME PAGE
+  ═══════════════════════════════ */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    background: var(--charcoal);
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 60%, rgba(92,74,42,0.3) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(139,69,19,0.15) 0%, transparent 60%);
+  }
+  .hero-texture {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  }
+  .cave-art { position: absolute; opacity: 0.07; font-size: 8rem; }
+  .cave-art-1 { top: 15%; left: 5%; transform: rotate(-15deg); }
+  .cave-art-2 { bottom: 20%; right: 8%; transform: rotate(10deg) scaleX(-1); font-size: 5rem; }
+  .hero-inner {
+    position: relative; z-index: 2; text-align: center;
+    padding: 2rem; animation: fadeUp 1.4s ease both;
+  }
+  .hero-eyebrow {
+    font-family: 'Cinzel', serif; font-size: 0.7rem;
+    letter-spacing: 0.5em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 1.5rem; opacity: 0.8;
+  }
+  .hero-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(4rem, 12vw, 10rem);
+    line-height: 0.9; letter-spacing: 0.05em;
+    color: var(--parchment);
+    text-shadow: 0 0 80px rgba(200,169,110,0.3);
+    margin-bottom: 1rem;
+  }
+  .hero-title span { color: var(--sand); }
+  .hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-style: italic; color: var(--ash);
+    margin-bottom: 3rem; max-width: 500px;
+    margin-left: auto; margin-right: auto; line-height: 1.7;
+  }
+  .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .scroll-hint {
+    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--ash); opacity: 0.6;
+    animation: bounce 2s infinite;
+  }
+  .scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, var(--sand), transparent); }
+
+  .timeline-strip { background: var(--stone); padding: 1.5rem 0; overflow: hidden; }
+  .timeline-track {
+    display: flex; gap: 4rem;
+    animation: marquee 30s linear infinite; white-space: nowrap;
+  }
+  .timeline-item {
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--ash); display: flex; align-items: center; gap: 1rem;
+  }
+  .timeline-item::before { content: '◆'; color: var(--sand); font-size: 0.5rem; }
+
+  .section-about {
+    padding: 8rem 4rem;
+    max-width: 1400px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center;
+  }
+  .about-text .label {
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 1.5rem;
+  }
+  .about-text h2 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 600;
+    line-height: 1.3; color: var(--parchment); margin-bottom: 2rem;
+  }
+  .about-text p { font-size: 1.1rem; line-height: 1.9; color: var(--ash); margin-bottom: 1.5rem; }
+  .about-visual { position: relative; height: 500px; }
+  .about-card-main {
+    position: absolute; top: 0; left: 10%;
+    width: 75%; height: 85%;
+    background: var(--stone);
+    border: 1px solid rgba(200,169,110,0.2);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .about-card-accent {
+    position: absolute; bottom: 0; right: 0;
+    width: 50%; height: 55%;
+    background: var(--earth);
+    border: 1px solid rgba(200,169,110,0.15);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cave-illustration { font-size: 5rem; opacity: 0.5; }
+  .about-stat { text-align: center; padding: 1rem; }
+  .about-stat-num {
+    font-family: 'Cinzel Decorative', serif; font-size: 2.5rem;
+    color: var(--sand); display: block;
+  }
+  .about-stat-label {
+    font-family: 'Cinzel', serif; font-size: 0.6rem;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--ash);
+  }
+
+  /* ── HOME COLLECTIONS PREVIEW ── */
+  .section-collections { padding: 6rem 4rem; background: var(--stone); }
+  .collections-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 2px; max-width: 1200px; margin: 0 auto;
+  }
+  .collection-card {
+    position: relative; aspect-ratio: 3/4;
+    background: var(--charcoal); overflow: hidden; cursor: pointer;
+  }
+  .collection-card:first-child { grid-column: span 2; aspect-ratio: auto; min-height: 500px; }
+  .card-bg {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10rem; opacity: 0.12; transition: transform 0.6s ease, opacity 0.4s;
+  }
+  .collection-card:hover .card-bg { transform: scale(1.1); opacity: 0.18; }
+  .card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(26,20,16,0.9) 0%, rgba(26,20,16,0.2) 50%, transparent 100%);
+  }
+  .card-content {
+    position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem;
+    transform: translateY(8px); transition: transform 0.4s ease;
+  }
+  .collection-card:hover .card-content { transform: translateY(0); }
+  .card-era {
+    font-family: 'Cinzel', serif; font-size: 0.6rem;
+    letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 0.5rem;
+  }
+  .card-title {
+    font-family: 'Cinzel', serif; font-size: 1.4rem;
+    font-weight: 600; color: var(--parchment); margin-bottom: 0.5rem;
+  }
+  .card-desc {
+    font-size: 0.95rem; font-style: italic;
+    color: var(--ash); line-height: 1.6;
+    max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+  }
+  .collection-card:hover .card-desc { max-height: 4rem; }
+  .card-stone { background: #1E1A15; }
+  .card-stone .card-bg { color: #C8A96E; }
+  .card-bronze { background: #1A1508; }
+  .card-bronze .card-bg { color: #B87333; }
+  .card-iron { background: #151515; }
+  .card-iron .card-bg { color: #A0A0A0; }
+  .card-medieval { background: #120D1A; }
+  .card-medieval .card-bg { color: #9B4FCA; }
+
+  /* ── HOME PROCESS ── */
+  .section-process { padding: 8rem 4rem; max-width: 1200px; margin: 0 auto; }
+  .process-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3rem; margin-top: 4rem; }
+  .process-item { text-align: center; }
+  .process-num {
+    font-family: 'Cinzel Decorative', serif; font-size: 3rem;
+    color: rgba(200,169,110,0.2); line-height: 1; margin-bottom: 1rem;
+  }
+  .process-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .process-title {
+    font-family: 'Cinzel', serif; font-size: 0.9rem;
+    letter-spacing: 0.1em; color: var(--parchment); margin-bottom: 0.8rem;
+  }
+  .process-desc { font-size: 0.95rem; font-style: italic; color: var(--ash); line-height: 1.7; }
+
+  /* ── FEATURED PRODUCT ── */
+  .section-featured { padding: 6rem 4rem; background: linear-gradient(135deg, var(--stone) 0%, #1E170E 100%); }
+  .featured-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+  .featured-visual {
+    position: relative; aspect-ratio: 1;
+    background: var(--charcoal);
+    border: 1px solid rgba(200,169,110,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12rem; overflow: hidden;
+  }
+  .featured-visual::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 40% 40%, rgba(200,169,110,0.1) 0%, transparent 70%);
+  }
+  .featured-tag {
+    position: absolute; top: 1.5rem; left: 1.5rem;
+    font-family: 'Cinzel', serif; font-size: 0.6rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    padding: 0.4rem 1rem; background: var(--sand); color: var(--charcoal);
+  }
+  .featured-info .era-badge {
+    font-family: 'Cinzel', serif; font-size: 0.6rem;
+    letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 1rem; display: block;
+  }
+  .featured-info h2 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    color: var(--parchment); margin-bottom: 1rem; line-height: 1.3;
+  }
+  .featured-info .price {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem; color: var(--sand); margin-bottom: 1.5rem;
+  }
+  .featured-info p { font-size: 1.05rem; font-style: italic; color: var(--ash); line-height: 1.8; margin-bottom: 2rem; }
+  .size-selector { margin-bottom: 2rem; }
+  .size-label {
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--ash); margin-bottom: 0.8rem; display: block;
+  }
+  .sizes { display: flex; gap: 0.5rem; }
+  .size-btn {
+    width: 42px; height: 42px;
+    border: 1px solid rgba(200,169,110,0.3);
+    background: transparent; color: var(--ash);
+    font-family: 'Cinzel', serif; font-size: 0.7rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .size-btn:hover, .size-btn.active { border-color: var(--sand); color: var(--sand); background: rgba(200,169,110,0.1); }
+  .add-btn {
+    width: 100%; padding: 1.1rem;
+    background: var(--sand); border: none;
+    font-family: 'Cinzel', serif; font-size: 0.8rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--charcoal); cursor: pointer; transition: all 0.3s;
+  }
+  .add-btn:hover { background: var(--parchment); }
+
+  /* ── TESTIMONIALS ── */
+  .section-testimonials { padding: 6rem 4rem; background: var(--charcoal); text-align: center; }
+  .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 1100px; margin: 4rem auto 0; }
+  .testimonial-card { background: var(--stone); border: 1px solid rgba(200,169,110,0.12); padding: 2rem; text-align: left; }
+  .testimonial-stars { color: var(--sand); font-size: 0.9rem; margin-bottom: 1rem; }
+  .testimonial-text { font-size: 1rem; font-style: italic; color: var(--ash); line-height: 1.8; margin-bottom: 1.5rem; }
+  .testimonial-author { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sand); }
+
+  /* ── NEWSLETTER ── */
+  .section-newsletter { padding: 6rem 4rem; background: var(--stone); text-align: center; position: relative; overflow: hidden; }
+  .newsletter-bg { position: absolute; inset: 0; opacity: 0.03; font-size: 20rem; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .newsletter-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+  .newsletter-inner h2 { font-family: 'Cinzel', serif; font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--parchment); margin-bottom: 1rem; }
+  .newsletter-inner p { font-size: 1.05rem; font-style: italic; color: var(--ash); margin-bottom: 2rem; line-height: 1.7; }
+  .newsletter-form { display: flex; gap: 0; }
+  .newsletter-input {
+    flex: 1; padding: 1rem 1.5rem;
+    background: var(--charcoal); border: 1px solid rgba(200,169,110,0.3);
+    border-right: none; color: var(--parchment);
+    font-family: 'EB Garamond', serif; font-size: 1rem; outline: none;
+  }
+  .newsletter-input::placeholder { color: var(--ash); font-style: italic; }
+  .newsletter-input:focus { border-color: rgba(200,169,110,0.6); }
+  .newsletter-btn {
+    padding: 1rem 2rem; background: var(--sand); border: 1px solid var(--sand);
+    font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--charcoal); cursor: pointer; transition: all 0.3s; white-space: nowrap;
+  }
+  .newsletter-btn:hover { background: var(--parchment); border-color: var(--parchment); }
+
+  /* ═══════════════════════════════
+     COLLECTION PAGE
+  ═══════════════════════════════ */
+  .collection-page { padding: 4rem; max-width: 1400px; margin: 0 auto; }
+  .collection-filters {
+    display: flex; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; justify-content: center;
+  }
+  .filter-btn {
+    font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.25em;
+    text-transform: uppercase; padding: 0.5rem 1.2rem;
+    border: 1px solid rgba(200,169,110,0.3); background: transparent;
+    color: var(--ash); cursor: pointer; transition: all 0.3s;
+  }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--sand); color: var(--sand); background: rgba(200,169,110,0.08); }
+  .products-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 2rem; margin-top: 2rem;
+  }
+  .product-card {
+    background: var(--stone);
+    border: 1px solid rgba(200,169,110,0.1);
+    overflow: hidden; cursor: pointer;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .product-card:hover { border-color: rgba(200,169,110,0.35); transform: translateY(-4px); }
+  .product-img {
+    aspect-ratio: 3/4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8rem; background: var(--charcoal);
+    position: relative; overflow: hidden;
+  }
+  .product-img::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(200,169,110,0.06) 0%, transparent 70%);
+  }
+  .product-badge {
+    position: absolute; top: 1rem; left: 1rem;
+    font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.2em;
+    text-transform: uppercase; padding: 0.3rem 0.7rem;
+    background: var(--sand); color: var(--charcoal);
+  }
+  .product-info { padding: 1.5rem; }
+  .product-era {
+    font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.35em;
+    text-transform: uppercase; color: var(--sand); margin-bottom: 0.4rem;
+  }
+  .product-name {
+    font-family: 'Cinzel', serif; font-size: 1rem; color: var(--parchment);
+    margin-bottom: 0.5rem; line-height: 1.3;
+  }
+  .product-price {
+    font-family: 'Cinzel Decorative', serif; font-size: 1.1rem;
+    color: var(--sand); margin-bottom: 1rem;
+  }
+  .product-desc { font-size: 0.9rem; font-style: italic; color: var(--ash); line-height: 1.6; margin-bottom: 1.2rem; }
+  .product-actions { display: flex; gap: 0.5rem; }
+  .product-buy-btn {
+    flex: 1; padding: 0.7rem 1rem;
+    background: var(--sand); border: none;
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--charcoal); cursor: pointer; transition: all 0.3s;
+    text-decoration: none; text-align: center; display: block;
+  }
+  .product-buy-btn:hover { background: var(--parchment); }
+  .product-cart-btn {
+    padding: 0.7rem 1rem;
+    background: transparent;
+    border: 1px solid rgba(200,169,110,0.3);
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--ash); cursor: pointer; transition: all 0.3s;
+  }
+  .product-cart-btn:hover { border-color: var(--sand); color: var(--sand); }
+
+  /* ═══════════════════════════════
+     OUR STORY PAGE
+  ═══════════════════════════════ */
+  .story-page { max-width: 900px; margin: 0 auto; padding: 4rem 2rem 8rem; }
+  .story-block { margin-bottom: 5rem; }
+  .story-block .label {
+    font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.4em;
+    text-transform: uppercase; color: var(--sand); margin-bottom: 1.5rem; display: block;
+  }
+  .story-block h2 {
+    font-family: 'Cinzel', serif; font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 600; color: var(--parchment); margin-bottom: 2rem; line-height: 1.3;
+  }
+  .story-block p { font-size: 1.15rem; line-height: 2; color: var(--ash); margin-bottom: 1.5rem; }
+  .story-block p strong { color: var(--parchment); font-style: normal; }
+  .story-divider {
+    width: 80px; height: 1px; background: var(--sand); margin: 3rem auto; opacity: 0.5;
+  }
+  .story-quote {
+    border-left: 2px solid var(--sand);
+    padding: 1.5rem 2rem; margin: 3rem 0;
+    background: rgba(200,169,110,0.04);
+  }
+  .story-quote p {
+    font-size: 1.3rem; font-style: italic; color: var(--parchment);
+    line-height: 1.7; margin: 0;
+  }
+  .story-values {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem;
+  }
+  .story-value {
+    text-align: center; padding: 2rem 1.5rem;
+    background: var(--stone); border: 1px solid rgba(200,169,110,0.1);
+  }
+  .story-value-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .story-value-title {
+    font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--parchment); margin-bottom: 0.8rem;
+  }
+  .story-value-desc { font-size: 0.95rem; font-style: italic; color: var(--ash); line-height: 1.7; }
+
+  /* ═══════════════════════════════
+     CART PAGE
+  ═══════════════════════════════ */
+  .cart-page { max-width: 1100px; margin: 0 auto; padding: 4rem 2rem 8rem; }
+  .cart-layout { display: grid; grid-template-columns: 1fr 380px; gap: 3rem; align-items: start; }
+  .cart-items-section h2 {
+    font-family: 'Cinzel', serif; font-size: 1.2rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--parchment); margin-bottom: 2rem;
+    padding-bottom: 1rem; border-bottom: 1px solid rgba(200,169,110,0.2);
+  }
+  .cart-item {
+    display: grid; grid-template-columns: 100px 1fr auto;
+    gap: 1.5rem; align-items: center; padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(200,169,110,0.1);
+  }
+  .cart-item-img {
+    width: 100px; height: 120px;
+    background: var(--stone); display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; border: 1px solid rgba(200,169,110,0.1);
+  }
+  .cart-item-name {
+    font-family: 'Cinzel', serif; font-size: 0.9rem; color: var(--parchment); margin-bottom: 0.4rem;
+  }
+  .cart-item-detail { font-size: 0.85rem; font-style: italic; color: var(--ash); margin-bottom: 0.8rem; }
+  .cart-qty { display: flex; align-items: center; gap: 0.8rem; }
+  .qty-btn {
+    width: 28px; height: 28px; border: 1px solid rgba(200,169,110,0.3);
+    background: transparent; color: var(--ash); cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 0.9rem; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:hover { border-color: var(--sand); color: var(--sand); }
+  .qty-num {
+    font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--parchment); min-width: 20px; text-align: center;
+  }
+  .cart-item-remove {
+    font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--ash); cursor: pointer;
+    transition: color 0.3s; background: none; border: none;
+  }
+  .cart-item-remove:hover { color: var(--accent); }
+  .cart-item-price {
+    font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: var(--sand); text-align: right;
+  }
+  .cart-item-right { text-align: right; }
+  .cart-summary {
+    background: var(--stone); border: 1px solid rgba(200,169,110,0.15);
+    padding: 2rem; position: sticky; top: 100px;
+  }
+  .cart-summary h3 {
+    font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--parchment); margin-bottom: 2rem;
+    padding-bottom: 1rem; border-bottom: 1px solid rgba(200,169,110,0.15);
+  }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem; font-size: 0.95rem;
+  }
+  .summary-row span:first-child { font-style: italic; color: var(--ash); }
+  .summary-row span:last-child { font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--parchment); }
+  .summary-row.total {
+    border-top: 1px solid rgba(200,169,110,0.2);
+    padding-top: 1rem; margin-top: 1rem;
+  }
+  .summary-row.total span:first-child { font-style: normal; font-family: 'Cinzel', serif; color: var(--parchment); }
+  .summary-row.total span:last-child { font-family: 'Cinzel Decorative', serif; font-size: 1.2rem; color: var(--sand); }
+  .checkout-btn {
+    width: 100%; padding: 1rem; margin-top: 1.5rem;
+    background: var(--sand); border: none;
+    font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--charcoal); cursor: pointer; transition: all 0.3s;
+  }
+  .checkout-btn:hover { background: var(--parchment); }
+  .empty-cart {
+    text-align: center; padding: 5rem 2rem;
+  }
+  .empty-cart .icon { font-size: 4rem; margin-bottom: 2rem; opacity: 0.3; }
+  .empty-cart h3 {
+    font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--parchment); margin-bottom: 1rem;
+  }
+  .empty-cart p { font-style: italic; color: var(--ash); margin-bottom: 2rem; }
+
+  /* ═══════════════════════════════
+     REFUND POLICY PAGE
+  ═══════════════════════════════ */
+  .policy-page { max-width: 800px; margin: 0 auto; padding: 4rem 2rem 8rem; }
+  .policy-block { margin-bottom: 3rem; }
+  .policy-block h3 {
+    font-family: 'Cinzel', serif; font-size: 0.9rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--sand); margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem; border-bottom: 1px solid rgba(200,169,110,0.15);
+  }
+  .policy-block p, .policy-block li {
+    font-size: 1.05rem; line-height: 1.9; color: var(--ash); margin-bottom: 1rem;
+  }
+  .policy-block ul { padding-left: 1.5rem; }
+  .policy-block li { list-style: none; padding-left: 1rem; }
+  .policy-block li::before { content: '◆ '; color: var(--sand); font-size: 0.5rem; vertical-align: middle; }
+  .policy-highlight {
+    background: rgba(200,169,110,0.06); border-left: 2px solid var(--sand);
+    padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+    font-size: 1rem; color: var(--parchment); font-style: italic; line-height: 1.7;
+  }
+  .policy-contact {
+    background: var(--stone); border: 1px solid rgba(200,169,110,0.15);
+    padding: 2rem; margin-top: 3rem; text-align: center;
+  }
+  .policy-contact h4 {
+    font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--parchment); margin-bottom: 1rem;
+  }
+  .policy-contact p { font-style: italic; color: var(--ash); margin-bottom: 0.5rem; }
+  .policy-contact a { color: var(--sand); text-decoration: none; }
+  .policy-contact a:hover { text-decoration: underline; }
+
+  /* ═══════════════════════════════
+     SIZE CHART PAGE
+  ═══════════════════════════════ */
+  .size-chart-page { max-width: 900px; margin: 0 auto; padding: 4rem 2rem 8rem; }
+  .size-intro { font-size: 1.05rem; font-style: italic; color: var(--ash); line-height: 1.8; margin-bottom: 3rem; text-align: center; }
+  .size-table-wrap { overflow-x: auto; margin-bottom: 3rem; }
+  .size-table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'EB Garamond', serif;
+  }
+  .size-table thead tr {
+    background: var(--stone); border-bottom: 1px solid rgba(200,169,110,0.3);
+  }
+  .size-table th {
+    font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--sand);
+    padding: 1rem 1.5rem; text-align: left;
+  }
+  .size-table td {
+    padding: 1rem 1.5rem; font-size: 1rem; color: var(--ash);
+    border-bottom: 1px solid rgba(200,169,110,0.08);
+  }
+  .size-table tr:hover td { background: rgba(200,169,110,0.04); color: var(--parchment); }
+  .size-table .size-label-cell {
+    font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 0.15em;
+    color: var(--parchment); font-style: normal;
+  }
+  .size-tip {
+    background: var(--stone); border: 1px solid rgba(200,169,110,0.12);
+    padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .size-tip h4 {
+    font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--sand); margin-bottom: 0.8rem;
+  }
+  .size-tip p { font-size: 0.95rem; font-style: italic; color: var(--ash); line-height: 1.7; }
+  .measure-guide {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem;
+  }
+  .measure-item { text-align: center; padding: 1.5rem; background: var(--stone); border: 1px solid rgba(200,169,110,0.1); }
+  .measure-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+  .measure-title {
+    font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--parchment); margin-bottom: 0.5rem;
+  }
+  .measure-desc { font-size: 0.85rem; font-style: italic; color: var(--ash); line-height: 1.6; }
+
+  /* ═══════════════════════════════
+     FOOTER (shared)
+  ═══════════════════════════════ */
+  footer {
+    padding: 4rem 4rem 2rem;
+    background: var(--charcoal);
+    border-top: 1px solid rgba(200,169,110,0.1);
+  }
+  .footer-top {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 4rem; margin-bottom: 3rem;
+  }
+  .footer-brand .logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.5rem; letter-spacing: 0.2em;
+    color: var(--sand); text-decoration: none;
+    display: block; margin-bottom: 1.5rem; cursor: pointer;
+  }
+  .footer-brand p { font-size: 0.95rem; font-style: italic; color: var(--ash); line-height: 1.8; }
+  .footer-col h4 {
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    letter-spacing: 0.35em; text-transform: uppercase;
+    color: var(--sand); margin-bottom: 1.5rem;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 0.8rem; }
+  .footer-col a {
+    font-size: 0.9rem; font-style: italic;
+    color: var(--ash); text-decoration: none; transition: color 0.3s; cursor: pointer;
+  }
+  .footer-col a:hover { color: var(--sand); }
+  .footer-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(200,169,110,0.1); padding-top: 2rem;
+  }
+  .footer-bottom p { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--ash); opacity: 0.6; }
+  .social-links { display: flex; gap: 1.5rem; }
+  .social-link {
+    font-family: 'Cinzel', serif; font-size: 0.6rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ash); text-decoration: none; transition: color 0.3s;
+  }
+  .social-link:hover { color: var(--sand); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+  @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+    background: var(--stone); border: 1px solid rgba(200,169,110,0.3);
+    padding: 1rem 1.5rem;
+    font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.15em;
+    color: var(--sand); text-transform: uppercase;
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.4s ease;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-links { display: none; }
+    .nav-hamburger { display: flex; }
+    .section-about, .featured-inner, .footer-top { grid-template-columns: 1fr; gap: 3rem; }
+    .collections-grid { grid-template-columns: 1fr; }
+    .collection-card:first-child { grid-column: span 1; min-height: 300px; }
+    .process-grid { grid-template-columns: repeat(2, 1fr); }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    .products-grid { grid-template-columns: repeat(2, 1fr); }
+    .cart-layout { grid-template-columns: 1fr; }
+    .story-values, .measure-guide { grid-template-columns: 1fr; }
+    .section-about, .section-collections, .section-process, .section-featured,
+    .section-testimonials, .section-newsletter, footer { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .collection-page, .story-page, .cart-page, .policy-page, .size-chart-page { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .newsletter-form { flex-direction: column; }
+    .newsletter-input { border-right: 1px solid rgba(200,169,110,0.3); border-bottom: none; }
+  }
+  @media (max-width: 600px) {
+    .products-grid { grid-template-columns: 1fr; }
+    .cart-item { grid-template-columns: 80px 1fr; }
+    .cart-item-right { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <span class="mobile-close" onclick="closeMobile()">✕</span>
+  <a onclick="navigate('home');closeMobile()">Home</a>
+  <a onclick="navigate('collection');closeMobile()">Collection</a>
+  <a onclick="navigate('story');closeMobile()">Our Story</a>
+  <a onclick="navigate('cart');closeMobile()">Cart</a>
+  <a onclick="navigate('refund');closeMobile()">Refund Policy</a>
+  <a onclick="navigate('sizechart');closeMobile()">Size Chart</a>
+</div>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <span class="nav-logo" onclick="navigate('home')">ERAZ</span>
+  <ul class="nav-links">
+    <li><a onclick="navigate('collection')" id="nav-collection">Collection</a></li>
+    <li><a onclick="navigate('story')" id="nav-story">Our Story</a></li>
+    <li><a onclick="navigate('sizechart')" id="nav-sizechart">Size Chart</a></li>
+    <li><a onclick="navigate('refund')" id="nav-refund">Refund Policy</a></li>
+  </ul>
+  <div class="nav-right">
+    <span class="cart-icon" onclick="navigate('cart')">
+      ☽ Cart
+      <span class="cart-count" id="cartCount">0</span>
+    </span>
+    <button class="nav-cta" onclick="navigate('collection')">Shop Now</button>
+    <div class="nav-hamburger" onclick="openMobile()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: HOME
+════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-texture"></div>
+    <div class="cave-art cave-art-1">🦬</div>
+    <div class="cave-art cave-art-2">🏹</div>
+    <div class="hero-inner">
+      <p class="hero-eyebrow">Est. in the spirit of all ages</p>
+      <h1 class="hero-title">ER<span>A</span>Z</h1>
+      <p class="hero-subtitle">From cave walls to catwalks — we wear the stories of civilisations.</p>
+      <div class="hero-btns">
+        <a class="btn-primary" onclick="navigate('collection')">Shop Now</a>
+        <a class="btn-outline" onclick="navigate('story')">Our Story</a>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- TIMELINE STRIP -->
+  <div class="timeline-strip">
+    <div class="timeline-track">
+      <span class="timeline-item">Stone Age · 3.3 Million BC</span>
+      <span class="timeline-item">Bronze Age · 3300 BC</span>
+      <span class="timeline-item">Iron Age · 1200 BC</span>
+      <span class="timeline-item">Ancient Egypt · 3100 BC</span>
+      <span class="timeline-item">Roman Empire · 27 BC</span>
+      <span class="timeline-item">Medieval Era · 500 AD</span>
+      <span class="timeline-item">Renaissance · 1300 AD</span>
+      <span class="timeline-item">Ottoman Empire · 1299 AD</span>
+      <span class="timeline-item">Stone Age · 3.3 Million BC</span>
+      <span class="timeline-item">Bronze Age · 3300 BC</span>
+      <span class="timeline-item">Iron Age · 1200 BC</span>
+      <span class="timeline-item">Ancient Egypt · 3100 BC</span>
+      <span class="timeline-item">Roman Empire · 27 BC</span>
+      <span class="timeline-item">Medieval Era · 500 AD</span>
+      <span class="timeline-item">Renaissance · 1300 AD</span>
+      <span class="timeline-item">Ottoman Empire · 1299 AD</span>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- ABOUT SNIPPET -->
+  <section id="about">
+    <div class="section-about">
+      <div class="about-text reveal">
+        <p class="label">Our Philosophy</p>
+        <h2>History is not a museum.<br>It is a wardrobe.</h2>
+        <p>ERAZ was born from a single obsession: that every human age left behind not just ruins and relics, but a visual language — symbols, patterns, textures — that still pulse with meaning today.</p>
+        <p>We take those languages — the petroglyphs of the Stone Age, the geometric precision of ancient civilisations, the intricacy of medieval heraldry — and weave them into contemporary garments meant to be worn, lived in, and passed down.</p>
+        <a class="btn-primary" style="display: inline-block; margin-top: 1rem;" onclick="navigate('story')">Read Our Story</a>
+      </div>
+      <div class="about-visual reveal">
+        <div class="about-card-main">
+          <div style="text-align: center;">
+            <div class="cave-illustration">🪨</div>
+            <div style="font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ash); margin-top: 1rem;">The Stone Archive</div>
+          </div>
+        </div>
+        <div class="about-card-accent">
+          <div class="about-stat">
+            <span class="about-stat-num">12</span>
+            <span class="about-stat-label">Historical Eras</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- COLLECTIONS PREVIEW -->
+  <section id="collections" class="section-collections">
+    <div class="section-header reveal">
+      <span class="label">Our Collections</span>
+      <h2>Civilisations, Stitched in Cloth</h2>
+    </div>
+    <div class="collections-grid">
+      <div class="collection-card card-stone reveal" onclick="navigate('collection')">
+        <div class="card-bg">🦴</div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <p class="card-era">3.3 Million BC — 3000 BC</p>
+          <h3 class="card-title">The Stone Archive</h3>
+          <p class="card-desc">Petroglyphs, hand prints, and cave art reimagined as wearable mythology.</p>
+        </div>
+      </div>
+      <div class="collection-card card-bronze reveal" onclick="navigate('collection')">
+        <div class="card-bg">⚔️</div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <p class="card-era">3300 BC — 1200 BC</p>
+          <h3 class="card-title">Bronze & Blade</h3>
+          <p class="card-desc">Warrior motifs and ancient metallurgy patterns forged into modern cuts.</p>
+        </div>
+      </div>
+      <div class="collection-card card-iron reveal" onclick="navigate('collection')">
+        <div class="card-bg">🏛️</div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <p class="card-era">800 BC — 476 AD</p>
+          <h3 class="card-title">Empire & Column</h3>
+          <p class="card-desc">Greek key, Roman laurel, and classical proportions in every seam.</p>
+        </div>
+      </div>
+      <div class="collection-card card-medieval reveal" onclick="navigate('collection')">
+        <div class="card-bg">🏰</div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <p class="card-era">500 AD — 1500 AD</p>
+          <h3 class="card-title">The Dark Codex</h3>
+          <p class="card-desc">Manuscript illuminations and heraldic crests translated into streetwear.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- PROCESS -->
+  <section id="craft" class="section-process">
+    <div class="section-header reveal">
+      <span class="label">The Craft</span>
+      <h2>How History Becomes Fashion</h2>
+    </div>
+    <div class="process-grid">
+      <div class="process-item reveal">
+        <div class="process-num">I</div>
+        <div class="process-icon">📜</div>
+        <h3 class="process-title">Archive Research</h3>
+        <p class="process-desc">Our designers study primary historical sources — museum archives, archaeological records, ancient artefacts.</p>
+      </div>
+      <div class="process-item reveal">
+        <div class="process-num">II</div>
+        <div class="process-icon">✏️</div>
+        <h3 class="process-title">Pattern Translation</h3>
+        <p class="process-desc">Ancient symbols and motifs are hand-drawn, reinterpreted, and adapted for modern fabric and silhouette.</p>
+      </div>
+      <div class="process-item reveal">
+        <div class="process-num">III</div>
+        <div class="process-icon">🧵</div>
+        <h3 class="process-title">Ethical Craft</h3>
+        <p class="process-desc">Every garment is crafted with care — using sustainable fabrics that honour the traditions they represent.</p>
+      </div>
+      <div class="process-item reveal">
+        <div class="process-num">IV</div>
+        <div class="process-icon">📦</div>
+        <h3 class="process-title">Delivered With Story</h3>
+        <p class="process-desc">Each piece arrives with a card detailing the era that inspired it — so you know what you're wearing.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- FEATURED PRODUCT -->
+  <section id="shop" class="section-featured">
+    <div class="featured-inner">
+      <div class="featured-visual reveal">
+        <div class="featured-tag">New Arrival</div>
+        <span>🦬</span>
+      </div>
+      <div class="featured-info reveal">
+        <span class="era-badge">◆ The Stone Archive Collection</span>
+        <h2>Altamira Oversized Tee</h2>
+        <div class="price">Rs. 3,499</div>
+        <p>Inspired by the famous cave paintings of Altamira, this piece features a hand-drawn bison motif printed in earth-tone pigments on 100% organic cotton. A wearable relic from 17,000 years ago.</p>
+        <div class="size-selector">
+          <span class="size-label">Select Size</span>
+          <div class="sizes">
+            <button class="size-btn">XS</button>
+            <button class="size-btn active">S</button>
+            <button class="size-btn">M</button>
+            <button class="size-btn">L</button>
+            <button class="size-btn">XL</button>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addToCart('Altamira Oversized Tee','Rs. 3,499','🦬')">Add to Cart</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="section-testimonials">
+    <div class="section-header reveal">
+      <span class="label">From Our Tribe</span>
+      <h2>What People Are Saying</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">"Finally a brand that makes me feel like I'm wearing something with real meaning. The Stone Archive hoodie gets compliments every single time."</p>
+        <p class="testimonial-author">— Ayesha K., Lahore</p>
+      </div>
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">"The packaging alone is an experience. They included a card about the Bronze Age motif on my tee. I learnt more history from ERAZ than school."</p>
+        <p class="testimonial-author">— Bilal M., Karachi</p>
+      </div>
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">"The quality is exceptional and the designs are genuinely unique. Nobody else is doing this. ERAZ is in a category of its own."</p>
+        <p class="testimonial-author">— Sara T., Islamabad</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section class="section-newsletter">
+    <div class="newsletter-bg">📜</div>
+    <div class="newsletter-inner reveal">
+      <h2>Join the Chronicle</h2>
+      <p>Be the first to know when a new era drops — exclusive launches, behind-the-scenes research, and members-only pieces.</p>
+      <div class="newsletter-form">
+        <input type="email" class="newsletter-input" placeholder="Your email address">
+        <button class="newsletter-btn" onclick="showToast('Welcome to the Chronicle!')">Subscribe</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo" onclick="navigate('home')">ERAZ</span>
+        <p>Clothing inspired by the ages of human history. Every stitch tells a story older than civilisation itself.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Collections</h4>
+        <ul>
+          <li><a onclick="navigate('collection')">Stone Archive</a></li>
+          <li><a onclick="navigate('collection')">Bronze & Blade</a></li>
+          <li><a onclick="navigate('collection')">Empire & Column</a></li>
+          <li><a onclick="navigate('collection')">The Dark Codex</a></li>
+          <li><a onclick="navigate('collection')">New Arrivals</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Brand</h4>
+        <ul>
+          <li><a onclick="navigate('story')">Our Story</a></li>
+          <li><a onclick="navigate('sizechart')">Size Chart</a></li>
+          <li><a onclick="navigate('refund')">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/eraz.pk" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@eraz.pk" target="_blank">TikTok</a></li>
+          <li><a href="https://www.pinterest.com/erazpk" target="_blank">Pinterest</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ERAZ. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/eraz.pk" target="_blank" class="social-link">Instagram</a>
+        <a href="https://www.tiktok.com/@eraz.pk" target="_blank" class="social-link">TikTok</a>
+        <a href="https://www.pinterest.com/erazpk" target="_blank" class="social-link">Pinterest</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end page-home -->
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: COLLECTION
+════════════════════════════════════════════════ -->
+<div class="page" id="page-collection">
+
+  <div style="padding-top: 80px; background: linear-gradient(to bottom, var(--stone), var(--charcoal));">
+    <div class="page-hero">
+      <div>
+        <span class="page-hero-label">Browse All Pieces</span>
+        <h1 class="page-hero-title">The Collection</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="collection-page">
+    <div class="collection-filters">
+      <button class="filter-btn active" onclick="filterProducts(this,'all')">All Pieces</button>
+      <button class="filter-btn" onclick="filterProducts(this,'stone')">Stone Archive</button>
+      <button class="filter-btn" onclick="filterProducts(this,'bronze')">Bronze & Blade</button>
+      <button class="filter-btn" onclick="filterProducts(this,'empire')">Empire & Column</button>
+      <button class="filter-btn" onclick="filterProducts(this,'medieval')">Dark Codex</button>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+
+      <div class="product-card reveal" data-era="stone">
+        <div class="product-img" style="background:#1E1A15;">
+          <div class="product-badge">New</div>
+          <span>🦬</span>
+        </div>
+        <div class="product-info">
+          <p class="product-era">The Stone Archive</p>
+          <h3 class="product-name">Altamira Oversized Tee</h3>
+          <p class="product-price">Rs. 3,499</p>
+          <p class="product-desc">Hand-drawn bison motif in earth-tone pigments on 100% organic cotton.</p>
+          <div class="product-actions">
+            <a class="product-buy-btn" href="https://whatsform.com/6hrFtb" target="_blank">Buy Now</a>
+            <button class="product-cart-btn" onclick="addToCart('Altamira Oversized Tee','Rs. 3,499','🦬')">+ Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card reveal" data-era="stone">
+        <div class="product-img" style="background:#1E1A15;">
+          <span>🤚</span>
+        </div>
+        <div class="product-info">
+          <p class="product-era">The Stone Archive</p>
+          <h3 class="product-name">Cave Hand Hoodie</h3>
+          <p class="product-price">Rs. 4,999</p>
+          <p class="product-desc">Stencilled hand print from Cueva de las Manos — bold, ancient, raw.</p>
+          <div class="product-actions">
+            <a class="product-buy-btn" href="https://whatsform.com/6hrFtb" target="_blank">Buy Now</a>
+            <button class="product-cart-btn" onclick="addToCart('Cave Hand Hoodie','Rs. 4,999','🤚')">+ Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card reveal" data-era="bronze">
+        <div class="product-img" style="background:#1A1508;">
+          <div class="product-badge">Bestseller</div>
+          <span>⚔️</span>
+        </div>
+        <div class="product-info">
+          <p class="product-era">Bronze & Blade</p>
+          <h3 class="product-name">Warrior Longline Tee</h3>
+          <p class="product-price">Rs. 3,799</p>
+          <p class="product-desc">Bronze-age weaponry reimagined in geometric line work. A battle-ready silhouette.</p>
+          <div class="product-actions">
+            <a class="product-buy-btn" href="https://whatsform.com/6hrFtb" target="_blank">Buy Now</a>
+            <button class="product-cart-btn" onclick="addToCart('Warrior Longline Tee','Rs. 3,799','⚔️')">+ Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card reveal" data-era="bronze">
+        <div class="product-img" style="background:#1A1508;">
+          <span>🛡️</span>
+        </div>
+        <div class="product-info">
+          <p class="product-era">Bronze & Blade</p>
+          <h3 class="product-name">Shield Crest Sweatshirt</h3>
+          <p class="product-price">Rs. 5,499</p>
+          <p class="product-desc">Ancient shield motifs rendered in hammered-metal tones on heavyweight fleece.</p>
+          <div class="product-actions">
+            <a class="product-buy-btn" href="https://whatsform.com/6hrFtb" target="_blank">Buy Now</a>
+            <button class="product-cart-btn" onclick="addToCart('Shield Crest Sweatshirt','Rs. 5,499','🛡️')">+ Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card reveal" data-era="empire">
+        <div class="product-img" style="background:#151515;">
+          <div class="product-badge">New</div>
+          <span>🏛️</span>
+        </div>
+        <div class="product-info">
+          <p class="product-era">Empire & Column</p>
+          <h3 class="product-name">Laurel Oversized Tee</h3>
+          <p class="product-price">Rs. 3,499</p>
+          <p class="product-desc">Roman laurel wreath in minimal line work — the mark of the eternal city.</p>
+          <div class="product-actions">
+            <a class="product-buy-btn" href="https://whatsform.com/6hrFtb" target="_blank">Buy Now</a>
+            <button class="product-cart-btn" onclick="addToCart('Laurel Oversized Tee','Rs. 3,499','🏛️')">+ Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card reveal" data-era="medieval">
+        <div class="product-img" style="background:#120D1A;">
+          <span>🏰</span>
+        </div>
+        <div class="product-info">
+          <p class="product-era">The Dark Codex</p>
+          <h3 class="product-name">Heraldic Crest Hoodie</h3>
+          <p class="product-price">Rs. 5,999</p>
+          <p class="product-desc">Medieval heraldic crest with illuminated border detail on premium hoodie.</p>
+          <div class="product-actions">
+            <a class="product-buy-btn" href="https://whatsform.com/6hrFtb" target="_blank">Buy Now</a>
+            <button class="product-cart-btn" onclick="addToCart('Heraldic Crest Hoodie','Rs. 5,999','🏰')">+ Cart</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo" onclick="navigate('home')">ERAZ</span>
+        <p>Clothing inspired by the ages of human history. Every stitch tells a story older than civilisation itself.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Pages</h4>
+        <ul>
+          <li><a onclick="navigate('home')">Home</a></li>
+          <li><a onclick="navigate('story')">Our Story</a></li>
+          <li><a onclick="navigate('sizechart')">Size Chart</a></li>
+          <li><a onclick="navigate('refund')">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/eraz.pk" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@eraz.pk" target="_blank">TikTok</a></li>
+          <li><a href="https://www.pinterest.com/erazpk" target="_blank">Pinterest</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a onclick="navigate('sizechart')">Size Guide</a></li>
+          <li><a onclick="navigate('refund')">Returns</a></li>
+          <li><a onclick="navigate('cart')">Cart</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ERAZ. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/eraz.pk" target="_blank" class="social-link">Instagram</a>
+        <a href="https://www.tiktok.com/@eraz.pk" target="_blank" class="social-link">TikTok</a>
+        <a href="https://www.pinterest.com/erazpk" target="_blank" class="social-link">Pinterest</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end page-collection -->
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: OUR STORY
+════════════════════════════════════════════════ -->
+<div class="page" id="page-story">
+
+  <div style="padding-top: 80px; background: linear-gradient(to bottom, var(--stone), var(--charcoal));">
+    <div class="page-hero">
+      <div>
+        <span class="page-hero-label">Who We Are</span>
+        <h1 class="page-hero-title">Our Story</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="story-page">
+
+    <div class="story-block reveal">
+      <span class="label">The Beginning</span>
+      <h2>Born from an obsession with time.</h2>
+      <p>ERAZ did not begin in a design studio or a boardroom. It began with a question asked late at night, staring at images of cave paintings in Altamira — <strong>what if we still wore these stories?</strong></p>
+      <p>Every civilisation that ever existed left behind a visual language. Symbols carved into rock. Geometric patterns beaten into bronze. Laurel wreaths pressed into marble. Heraldic crests stitched into banners. These were not just decorations — they were identity. They said: <em>I was here. This is what I believed. This is what I fought for.</em></p>
+      <p>ERAZ is our answer to that question. We are a clothing brand built on the conviction that history's visual languages are too powerful, too beautiful, and too human to be left in museums.</p>
+    </div>
+
+    <div class="story-divider"></div>
+
+    <div class="story-quote reveal">
+      <p>"Every piece we make is a translation. We take something ancient and ask: what does it mean to wear this today?"</p>
+    </div>
+
+    <div class="story-block reveal">
+      <span class="label">The Philosophy</span>
+      <h2>History is not a museum. It is a wardrobe.</h2>
+      <p>We believe clothing is the most personal archive a human being can carry. What you wear tells the story of who you are, where you come from, and what you value. ERAZ exists to make that story richer — to connect you, through cloth and thread, to the thousands of years of human creativity that came before you.</p>
+      <p>We are not a nostalgia brand. We are not a heritage brand in the traditional sense. We are a <strong>translation studio</strong> — taking the visual vocabulary of ancient civilisations and building it into garments that belong in the present moment, on the streets of Lahore, Karachi, and Islamabad.</p>
+    </div>
+
+    <div class="story-divider"></div>
+
+    <div class="story-block reveal">
+      <span class="label">Our Values</span>
+      <h2>What we stand for.</h2>
+      <div class="story-values">
+        <div class="story-value">
+          <div class="story-value-icon">📜</div>
+          <h4 class="story-value-title">Authenticity</h4>
+          <p class="story-value-desc">Every motif is researched. Every pattern is sourced from real historical records, not invented aesthetics.</p>
+        </div>
+        <div class="story-value">
+          <div class="story-value-icon">🧵</div>
+          <h4 class="story-value-title">Craft</h4>
+          <p class="story-value-desc">We refuse shortcuts. Every garment is made to be worn, washed, and passed down — not discarded after a season.</p>
+        </div>
+        <div class="story-value">
+          <div class="story-value-icon">🌍</div>
+          <h4 class="story-value-title">Belonging</h4>
+          <p class="story-value-desc">History belongs to everyone. Our collections draw from civilisations across every continent and culture.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="story-divider"></div>
+
+    <div class="story-block reveal" style="text-align:center;">
+      <h2>Ready to wear history?</h2>
+      <p style="max-width:500px; margin: 0 auto 2rem;">Browse our collections and find the era that speaks to you.</p>
+      <button class="btn-primary" onclick="navigate('collection')">Shop the Collection</button>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo" onclick="navigate('home')">ERAZ</span>
+        <p>Clothing inspired by the ages of human history.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a onclick="navigate('home')">Home</a></li>
+          <li><a onclick="navigate('collection')">Collection</a></li>
+          <li><a onclick="navigate('sizechart')">Size Chart</a></li>
+          <li><a onclick="navigate('refund')">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/eraz.pk" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@eraz.pk" target="_blank">TikTok</a></li>
+          <li><a href="https://www.pinterest.com/erazpk" target="_blank">Pinterest</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a onclick="navigate('refund')">Returns</a></li>
+          <li><a onclick="navigate('cart')">Cart</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ERAZ. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/eraz.pk" target="_blank" class="social-link">Instagram</a>
+        <a href="https://www.tiktok.com/@eraz.pk" target="_blank" class="social-link">TikTok</a>
+        <a href="https://www.pinterest.com/erazpk" target="_blank" class="social-link">Pinterest</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end page-story -->
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: CART
+════════════════════════════════════════════════ -->
+<div class="page" id="page-cart">
+
+  <div style="padding-top: 80px; background: linear-gradient(to bottom, var(--stone), var(--charcoal));">
+    <div class="page-hero">
+      <div>
+        <span class="page-hero-label">Your Selection</span>
+        <h1 class="page-hero-title">Your Cart</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-page">
+    <div id="cartContent"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo" onclick="navigate('home')">ERAZ</span>
+        <p>Clothing inspired by the ages of human history.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a onclick="navigate('home')">Home</a></li>
+          <li><a onclick="navigate('collection')">Collection</a></li>
+          <li><a onclick="navigate('sizechart')">Size Chart</a></li>
+          <li><a onclick="navigate('refund')">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/eraz.pk" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@eraz.pk" target="_blank">TikTok</a></li>
+          <li><a href="https://www.pinterest.com/erazpk" target="_blank">Pinterest</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a onclick="navigate('refund')">Returns</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ERAZ. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/eraz.pk" target="_blank" class="social-link">Instagram</a>
+        <a href="https://www.tiktok.com/@eraz.pk" target="_blank" class="social-link">TikTok</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end page-cart -->
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: REFUND POLICY
+════════════════════════════════════════════════ -->
+<div class="page" id="page-refund">
+
+  <div style="padding-top: 80px; background: linear-gradient(to bottom, var(--stone), var(--charcoal));">
+    <div class="page-hero">
+      <div>
+        <span class="page-hero-label">Customer Care</span>
+        <h1 class="page-hero-title">Refund Policy</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="policy-page">
+
+    <div class="policy-highlight">
+      At ERAZ, we stand behind every piece we make. If something isn't right, we will make it right — because history deserves to be worn with confidence.
+    </div>
+
+    <div class="policy-block reveal">
+      <h3>Returns & Exchanges</h3>
+      <p>We accept returns and exchanges within <strong style="color:var(--parchment)">7 days</strong> of delivery, provided the item is unused, unwashed, and in its original packaging with all tags intact.</p>
+      <ul>
+        <li>Items must be in original, unaltered condition.</li>
+        <li>Sale items and limited-edition pieces are final sale and not eligible for return.</li>
+        <li>Customised or personalised pieces cannot be returned unless defective.</li>
+        <li>Free exchanges are available for size issues on your first order.</li>
+      </ul>
+    </div>
+
+    <div class="policy-block reveal">
+      <h3>How to Initiate a Return</h3>
+      <p>To start a return or exchange, reach out to us within 7 days of receiving your order:</p>
+      <ul>
+        <li>WhatsApp us at <strong style="color:var(--parchment)">+92 300 000 0000</strong> with your order details and reason for return.</li>
+        <li>Include photos of the item if reporting a defect or damage.</li>
+        <li>Our team will respond within 24–48 hours with return instructions.</li>
+        <li>Do not ship items back without prior confirmation from our team.</li>
+      </ul>
+    </div>
+
+    <div class="policy-block reveal">
+      <h3>Refunds</h3>
+      <p>Once we receive and inspect the returned item, we will process your refund within <strong style="color:var(--parchment)">5–7 business days</strong>.</p>
+      <ul>
+        <li>Refunds are issued to the original payment method (bank transfer, Easypaisa, JazzCash).</li>
+        <li>Shipping charges are non-refundable unless the return is due to our error or a defective item.</li>
+        <li>Cash on delivery orders will receive refunds via bank transfer or mobile wallet.</li>
+      </ul>
+    </div>
+
+    <div class="policy-block reveal">
+      <h3>Defective or Wrong Items</h3>
+      <p>If you receive a defective, damaged, or incorrect item, we will replace it or issue a full refund at no cost to you. Please contact us within <strong style="color:var(--parchment)">48 hours</strong> of delivery with photographic evidence.</p>
+      <div class="policy-highlight">
+        We take quality seriously. Every garment is inspected before dispatch — but if we missed something, that is on us and we will fix it.
+      </div>
+    </div>
+
+    <div class="policy-block reveal">
+      <h3>Shipping Returns</h3>
+      <ul>
+        <li>Customers are responsible for return shipping costs unless the item is defective or incorrect.</li>
+        <li>We recommend using a trackable courier service.</li>
+        <li>ERAZ is not responsible for items lost during return shipping.</li>
+      </ul>
+    </div>
+
+    <div class="policy-contact reveal">
+      <h4>Questions? We're Here.</h4>
+      <p>WhatsApp: <a href="https://wa.me/923000000000">+92 300 000 0000</a></p>
+      <p>Instagram: <a href="https://www.instagram.com/eraz.pk" target="_blank">@eraz.pk</a></p>
+      <p>Response time: 24–48 hours</p>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo" onclick="navigate('home')">ERAZ</span>
+        <p>Clothing inspired by the ages of human history.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a onclick="navigate('home')">Home</a></li>
+          <li><a onclick="navigate('collection')">Collection</a></li>
+          <li><a onclick="navigate('sizechart')">Size Chart</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/eraz.pk" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@eraz.pk" target="_blank">TikTok</a></li>
+          <li><a href="https://www.pinterest.com/erazpk" target="_blank">Pinterest</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a onclick="navigate('cart')">Cart</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ERAZ. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/eraz.pk" target="_blank" class="social-link">Instagram</a>
+        <a href="https://www.tiktok.com/@eraz.pk" target="_blank" class="social-link">TikTok</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end page-refund -->
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: SIZE CHART
+════════════════════════════════════════════════ -->
+<div class="page" id="page-sizechart">
+
+  <div style="padding-top: 80px; background: linear-gradient(to bottom, var(--stone), var(--charcoal));">
+    <div class="page-hero">
+      <div>
+        <span class="page-hero-label">Find Your Fit</span>
+        <h1 class="page-hero-title">Size Chart</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="size-chart-page">
+
+    <p class="size-intro">ERAZ garments are cut for a relaxed, modern fit. All measurements below are body measurements in centimetres. When in doubt, size up — our pieces are designed to wear loose and lived-in.</p>
+
+    <div class="size-tip reveal">
+      <h4>💡 Our Fit Philosophy</h4>
+      <p>Most of our tees and hoodies are oversized by design — inspired by the draped, unstructured garments of ancient civilisations. If you prefer a closer fit, size down one from your usual.</p>
+    </div>
+
+    <h3 style="font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--sand); margin-bottom:1.5rem; margin-top:3rem;">T-Shirts & Oversized Tees</h3>
+    <div class="size-table-wrap reveal">
+      <table class="size-table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Chest (cm)</th>
+            <th>Length (cm)</th>
+            <th>Shoulder (cm)</th>
+            <th>Sleeve (cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="size-label-cell">XS</td><td>88–92</td><td>68</td><td>43</td><td>22</td></tr>
+          <tr><td class="size-label-cell">S</td><td>92–96</td><td>71</td><td>45</td><td>23</td></tr>
+          <tr><td class="size-label-cell">M</td><td>96–102</td><td>74</td><td>48</td><td>24</td></tr>
+          <tr><td class="size-label-cell">L</td><td>102–108</td><td>77</td><td>51</td><td>25</td></tr>
+          <tr><td class="size-label-cell">XL</td><td>108–116</td><td>80</td><td>54</td><td>26</td></tr>
+          <tr><td class="size-label-cell">XXL</td><td>116–124</td><td>83</td><td>57</td><td>27</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--sand); margin-bottom:1.5rem; margin-top:3rem;">Hoodies & Sweatshirts</h3>
+    <div class="size-table-wrap reveal">
+      <table class="size-table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Chest (cm)</th>
+            <th>Length (cm)</th>
+            <th>Shoulder (cm)</th>
+            <th>Sleeve (cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="size-label-cell">XS</td><td>90–94</td><td>64</td><td>44</td><td>58</td></tr>
+          <tr><td class="size-label-cell">S</td><td>94–98</td><td>67</td><td>46</td><td>60</td></tr>
+          <tr><td class="size-label-cell">M</td><td>98–104</td><td>70</td><td>49</td><td>62</td></tr>
+          <tr><td class="size-label-cell">L</td><td>104–110</td><td>73</td><td>52</td><td>64</td></tr>
+          <tr><td class="size-label-cell">XL</td><td>110–118</td><td>76</td><td>55</td><td>66</td></tr>
+          <tr><td class="size-label-cell">XXL</td><td>118–126</td><td>79</td><td>58</td><td>68</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--sand); margin-bottom:1.5rem; margin-top:3rem;">How to Measure Yourself</h3>
+    <div class="measure-guide reveal">
+      <div class="measure-item">
+        <div class="measure-icon">📏</div>
+        <h4 class="measure-title">Chest</h4>
+        <p class="measure-desc">Measure around the fullest part of your chest, keeping the tape parallel to the ground.</p>
+      </div>
+      <div class="measure-item">
+        <div class="measure-icon">📐</div>
+        <h4 class="measure-title">Length</h4>
+        <p class="measure-desc">Measure from the highest point of your shoulder straight down to where you want the garment to end.</p>
+      </div>
+      <div class="measure-item">
+        <div class="measure-icon">🦾</div>
+        <h4 class="measure-title">Sleeve</h4>
+        <p class="measure-desc">Measure from the shoulder seam down to your wrist with your arm slightly bent.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:4rem;">
+      <p style="font-style:italic; color:var(--ash); margin-bottom:1.5rem;">Still unsure about sizing? Message us on WhatsApp and we'll help you find the right fit.</p>
+      <a href="https://whatsform.com/6hrFtb" target="_blank" class="btn-primary">Ask About Sizing</a>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo" onclick="navigate('home')">ERAZ</span>
+        <p>Clothing inspired by the ages of human history.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a onclick="navigate('home')">Home</a></li>
+          <li><a onclick="navigate('collection')">Collection</a></li>
+          <li><a onclick="navigate('refund')">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/eraz.pk" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@eraz.pk" target="_blank">TikTok</a></li>
+          <li><a href="https://www.pinterest.com/erazpk" target="_blank">Pinterest</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a onclick="navigate('cart')">Cart</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ERAZ. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/eraz.pk" target="_blank" class="social-link">Instagram</a>
+        <a href="https://www.tiktok.com/@eraz.pk" target="_blank" class="social-link">TikTok</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end page-sizechart -->
+
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════ -->
+<script>
+  // ── CART STATE ──
+  let cart = [];
+
+  function addToCart(name, price, icon) {
+    const existing = cart.find(i => i.name === name);
+    if (existing) { existing.qty++; }
+    else { cart.push({ name, price, icon, qty: 1 }); }
+    updateCartCount();
+    showToast(name + ' added to cart');
+  }
+
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartCount();
+    renderCart();
+  }
+
+  function changeQty(index, delta) {
+    cart[index].qty += delta;
+    if (cart[index].qty <= 0) removeFromCart(index);
+    else { updateCartCount(); renderCart(); }
+  }
+
+  function updateCartCount() {
+    const total = cart.reduce((s, i) => s + i.qty, 0);
+    document.getElementById('cartCount').textContent = total;
+  }
+
+  function renderCart() {
+    const el = document.getElementById('cartContent');
+    if (!cart.length) {
+      el.innerHTML = `
+        <div class="empty-cart">
+          <div class="icon">🏺</div>
+          <h3>Your cart is empty</h3>
+          <p>No relics selected yet. Explore the collection and wear history.</p>
+          <button class="btn-primary" onclick="navigate('collection')">Browse Collection</button>
+        </div>`;
+      return;
+    }
+
+    const priceNum = p => parseInt(p.replace(/[^0-9]/g,''));
+    const subtotal = cart.reduce((s,i) => s + priceNum(i.price)*i.qty, 0);
+    const shipping = 199;
+    const total = subtotal + shipping;
+
+    const itemsHTML = cart.map((item, i) => `
+      <div class="cart-item">
+        <div class="cart-item-img">${item.icon}</div>
+        <div>
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-detail">${item.price} per piece</div>
+          <div class="cart-qty">
+            <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+            <span class="qty-num">${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+          </div>
+        </div>
+        <div class="cart-item-right">
+          <div class="cart-item-price">Rs. ${(priceNum(item.price)*item.qty).toLocaleString()}</div>
+          <button class="cart-item-remove" onclick="removeFromCart(${i})">Remove</button>
+        </div>
+      </div>`).join('');
+
+    // Build WhatsApp message
+    const waMsg = encodeURIComponent(
+      'Hello ERAZ, I would like to place an order:\n' +
+      cart.map(i => `- ${i.name} x${i.qty} (${i.price})`).join('\n') +
+      `\nTotal: Rs. ${total.toLocaleString()}`
+    );
+
+    el.innerHTML = `
+      <div class="cart-layout">
+        <div class="cart-items-section">
+          <h2>Your Pieces (${cart.reduce((s,i)=>s+i.qty,0)})</h2>
+          ${itemsHTML}
+        </div>
+        <div class="cart-summary">
+          <h3>Order Summary</h3>
+          <div class="summary-row"><span>Subtotal</span><span>Rs. ${subtotal.toLocaleString()}</span></div>
+          <div class="summary-row"><span>Shipping</span><span>Rs. ${shipping}</span></div>
+          <div class="summary-row total"><span>Total</span><span>Rs. ${total.toLocaleString()}</span></div>
+          <a href="https://whatsform.com/6hrFtb" target="_blank">
+            <button class="checkout-btn">Place Order</button>
+          </a>
+          <p style="font-size:0.8rem;font-style:italic;color:var(--ash);text-align:center;margin-top:1rem;line-height:1.6;">
+            You'll be taken to our order form to confirm your purchase.
+          </p>
+        </div>
+      </div>`;
+  }
+
+  // ── NAVIGATION ──
+  function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Active nav link
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active-link'));
+    const navEl = document.getElementById('nav-' + page);
+    if (navEl) navEl.classList.add('active-link');
+
+    // Re-run reveals for the new page
+    setTimeout(initReveals, 100);
+
+    // Render cart if navigating there
+    if (page === 'cart') renderCart();
+
+    // Size selector re-init
+    initSizeSelectors();
+  }
+
+  // ── MOBILE MENU ──
+  function openMobile() { document.getElementById('mobileMenu').classList.add('open'); }
+  function closeMobile() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+  // ── FILTER PRODUCTS ──
+  function filterProducts(btn, era) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.product-card').forEach(card => {
+      card.style.display = (era === 'all' || card.dataset.era === era) ? '' : 'none';
+    });
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── SCROLL REVEAL ──
+  function initReveals() {
+    const reveals = document.querySelectorAll('.page.active .reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(el => { el.classList.remove('visible'); observer.observe(el); });
+  }
+
+  // ── SIZE SELECTORS ──
+  function initSizeSelectors() {
+    document.querySelectorAll('.size-btn').forEach(btn => {
+      btn.onclick = function() {
+        this.closest('.sizes').querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      };
+    });
+  }
+
+  // ── INIT ──
+  initReveals();
+  initSizeSelectors();
+</script>
+
+  <!-- ── FIREBASE PREMIUM CHECKOUT MODAL ── -->
+  <div id="checkoutModal" style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.3s ease;">
+    <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);" onclick="closeForm()"></div>
+    <div style="position: relative; background: #231b15; border: 1px solid #C8A96E; width: 100%; max-width: 450px; border-radius: 15px; padding: 2rem; z-index: 10; box-shadow: 0 25px 50px rgba(0,0,0,0.6);">
+      <button style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #8C7B65; font-size: 1.5rem; cursor: pointer;" onclick="closeForm()">&times;</button>
+      
+      <h2 style="font-family: 'Cinzel', serif; color: #FAF5EA; font-size: 1.5rem; margin-bottom: 0.3rem; letter-spacing: 1px;">Complete Your Order</h2>
+      <p style="font-size: 0.9rem; color: #8C7B65; margin-bottom: 1.5rem; font-family: 'EB Garamond', serif;">Please provide your shipping details for Cash on Delivery.</p>
+      
+      <div style="background: #15100c; border: 1px solid rgba(200, 169, 110, 0.1); padding: 0.8rem 1rem; border-radius: 8px; display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 1.5rem; font-family: 'Cinzel', serif;">
+        <span style="color: #8C7B65;" id="sumTitle">ERAZ Article</span>
+        <span style="color: #C8A96E; font-weight: bold;" id="sumPrice">PKR 3,450</span>
+      </div>
+      
+      <form id="orderForm" onsubmit="submitForm(event)" style="font-family: 'EB Garamond', serif; display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+          <label style="display: block; font-family: 'Cinzel', serif; font-size: 0.75rem; color: #C8A96E; margin-bottom: 0.4rem; letter-spacing: 1px;">Select Size *</label>
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+            <label class="sz-lbl" style="border: 1px solid #2C2416; background: #15100c; text-align: center; padding: 0.5rem 0; font-size: 0.85rem; cursor: pointer; border-radius: 6px; color: #8C7B65; display: block;"><input type="radio" name="size" value="S" required style="display:none;">S</label>
+            <label class="sz-lbl" style="border: 1px solid #2C2416; background: #15100c; text-align: center; padding: 0.5rem 0; font-size: 0.85rem; cursor: pointer; border-radius: 6px; color: #8C7B65; display: block;"><input type="radio" name="size" value="M" style="display:none;">M</label>
+            <label class="sz-lbl" style="border: 1px solid #2C2416; background: #15100c; text-align: center; padding: 0.5rem 0; font-size: 0.85rem; cursor: pointer; border-radius: 6px; color: #8C7B65; display: block;"><input type="radio" name="size" value="L" style="display:none;">L</label>
+            <label class="sz-lbl" style="border: 1px solid #2C2416; background: #15100c; text-align: center; padding: 0.5rem 0; font-size: 0.85rem; cursor: pointer; border-radius: 6px; color: #8C7B65; display: block;"><input type="radio" name="size" value="XL" style="display:none;">XL</label>
+            <label class="sz-lbl" style="border: 1px solid #2C2416; background: #15100c; text-align: center; padding: 0.5rem 0; font-size: 0.85rem; cursor: pointer; border-radius: 6px; color: #8C7B65; display: block;"><input type="radio" name="size" value="XXL" style="display:none;">XXL</label>
+          </div>
+        </div>
+        
+        <div>
+          <label style="display: block; font-family: 'Cinzel', serif; font-size: 0.75rem; color: #C8A96E; margin-bottom: 0.4rem;">Full Name *</label>
+          <input type="text" id="custName" required placeholder="e.g. Raza Hussain" style="width: 100%; background: #15100c; border: 1px solid #2C2416; padding: 0.7rem 1rem; color: #FAF5EA; border-radius: 8px; outline: none;">
+        </div>
+        
+        <div>
+          <label style="display: block; font-family: 'Cinzel', serif; font-size: 0.75rem; color: #C8A96E; margin-bottom: 0.4rem;">WhatsApp / Phone Number *</label>
+          <div style="position: relative;">
+            <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #8C7B65;">+92</span>
+            <input type="tel" id="custPhone" required placeholder="3227224020" pattern="[0-9]{10}" style="width: 100%; background: #15100c; border: 1px solid #2C2416; padding: 0.7rem 1rem 0.7rem 3.2rem; color: #FAF5EA; border-radius: 8px; outline: none;">
+          </div>
+        </div>
+        
+        <div>
+          <label style="display: block; font-family: 'Cinzel', serif; font-size: 0.75rem; color: #C8A96E; margin-bottom: 0.4rem;">Shipping Address *</label>
+          <textarea id="custAddress" rows="2" required placeholder="House #, Street, Sector, City Name" style="width: 100%; background: #15100c; border: 1px solid #2C2416; padding: 0.7rem 1rem; color: #FAF5EA; border-radius: 8px; outline: none; resize: none; font-family: 'EB Garamond', serif;"></textarea>
+        </div>
+        
+        <button type="submit" id="submitBtn" style="width: 100%; background: #C8A96E; color: #1A1410; border: none; padding: 1rem; font-family: 'Cinzel', serif; font-weight: 600; letter-spacing: 1px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-top: 0.5rem;">Confirm Order (Cash on Delivery)</button>
+      </form>
+      
+      <div class="success-screen" id="successState" style="position: absolute; inset: 0; background: #231b15; border-radius: 15px; display: none; flex-direction: column; align-items: center; justify-content: center; text-center; padding: 2rem;">
+        <span style="font-size: 3.5rem; color: #4ade80; margin-bottom: 1rem;">✓</span>
+        <h3 style="font-family: 'Cinzel', serif; font-size: 1.8rem; color: #FAF5EA; margin-bottom: 0.5rem;">Order Confirmed!</h3>
+        <p style="color: #8C7B65; font-size: 1rem; line-height: 1.5; text-align: center;">Thank you for shopping with ERAZ.<br>Your package will arrive in 2-4 working days.</p>
+        <button style="width: auto; background: #C8A96E; color: #1A1410; border: none; padding: 0.6rem 2rem; font-family: 'Cinzel', serif; font-weight: 600; border-radius: 8px; cursor: pointer; margin-top: 1.5rem;" onclick="closeForm()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .sz-lbl:has(input:checked) {
+      background: #C8A96E !omportant;
+      background-color: #C8A96E !important;
+      color: #1A1410 !important;
+      font-weight: bold;
+    }
+  </style>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAU2X_DlaRVdgqMLDWptFCJGPhvXFI2mFU",
+        authDomain: "eraz-clothing.firebaseapp.com",
+        databaseURL: "https://eraz-clothing-default-rtdb.firebaseio.com",
+        projectId: "eraz-clothing",
+        storageBucket: "eraz-clothing.appspot.com",
+        messagingSenderId: "1098675122171",
+        appId: "1:1098675122171:web:dd88f913cc3ec7386dca23"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Setup global size selection styling handlers
+    document.querySelectorAll('.sz-lbl input').forEach(input => {
+      input.addEventListener('change', function() {
+        document.querySelectorAll('.sz-lbl').forEach(l => {
+          l.style.background = '#15100c';
+          l.style.color = '#8C7B65';
+        });
+        if(this.checked) {
+          this.parentElement.style.background = '#C8A96E';
+          this.parentElement.style.color = '#1A1410';
+        }
+      });
+    });
+
+    window.openForm = function(prodTitle, prodPrice) {
+        document.getElementById('checkoutModal').style.opacity = '1';
+        document.getElementById('checkoutModal').style.visibility = 'visible';
+        document.getElementById('sumTitle').innerText = prodTitle || "ERAZ Article";
+        document.getElementById('sumPrice').innerText = prodPrice || "PKR 3,450";
+    }
+
+    window.closeForm = function() {
+        document.getElementById('checkoutModal').style.opacity = '0';
+        document.getElementById('checkoutModal').style.visibility = 'hidden';
+        setTimeout(() => {
+            document.getElementById('orderForm').reset();
+            document.getElementById('successState').style.display = 'none';
+            document.querySelectorAll('.sz-lbl').forEach(l => {
+              l.style.background = '#15100c';
+              l.style.color = '#8C7B65';
+            });
+        }, 300);
+    }
+
+    window.submitForm = function(event) {
+        event.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "Processing Order...";
+
+        const selectedSize = document.querySelector('input[name="size"]:checked')?.value;
+        const orderPayload = {
+            product: document.getElementById('sumTitle').innerText,
+            price: document.getElementById('sumPrice').innerText,
+            size: selectedSize,
+            customerName: document.getElementById('custName').value,
+            customerPhone: "+92" + document.getElementById('custPhone').value,
+            customerAddress: document.getElementById('custAddress').value,
+            orderDate: new Date().toISOString(),
+            status: "Pending"
+            };
+
+            const dbRef = ref(database, 'orders');
+            const newOrderRef = push(dbRef);
+
+            set(newOrderRef, orderPayload)
+                .then(() => {
+                    document.getElementById('successState').style.display = 'flex';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    alert("Database connecting issue. Try again.");
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Confirm Order (Cash on Delivery)";
+                });
+        }
+
+        // Auto attach to any checkout buttons inside the premium look of original code
+        document.querySelectorAll('.checkout-btn, .buy-btn').forEach(button => {
+            button.removeAttribute('onclick');
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Get sibling product details dynamically if possible, or fall back to default
+                const parent = this.closest('.product-card, .product-details, .item');
+                let t = "ERAZ Premium Tee";
+                let p = "PKR 3,450";
+                if(parent) {
+                    t = parent.querySelector('h3, h2, h1')?.innerText || t;
+                    p = parent.querySelector('.price')?.innerText || p;
+                }
+                window.openForm(t, p);
+            });
+        });
+  </script>
+
+</body>
+</html>
