@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERAZ — Wear History</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --stone: #2C2416; --earth: #5C4A2A; --sand: #C8A96E; --parchment: #F2E8D0; --charcoal: #1A1410; --ash: #8C7B65; }
+  body { background: var(--charcoal); color: var(--parchment); font-family: 'EB Garamond', serif; overflow-x: hidden; }
+  
+  /* Music Player Style */
+  .music-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+  .music-btn { 
+    background: rgba(26,20,16,0.9); border: 1px solid var(--sand); 
+    color: var(--sand); padding: 10px 20px; cursor: pointer; 
+    font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.1em;
+  }
+
+  /* --- BAKI KA AAPKA DESIGN --- */
+  nav { padding: 1.5rem 4rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(200,169,110,0.15); }
+  .nav-logo { font-family: 'Cinzel Decorative', serif; font-size: 1.8rem; color: var(--sand); text-decoration: none; }
+  
+  /* Yahan aapka baki CSS continue karein... */
+</style>
+</head>
+<body>
+
+  <div class="music-container">
+    <audio id="myAudio" loop>
+      <source src="music.mp3" type="audio/mpeg">
+    </audio>
+    <button class="music-btn" onclick="toggleMusic()">♪ PLAY MUSIC</button>
+  </div>
+
+  <nav>
+    <a href="#" class="nav-logo">ERAZ</a>
+  </nav>
+
+  <script>
+    var audio = document.getElementById("myAudio");
+    function toggleMusic() {
+      if (audio.paused) {
+        audio.play();
+        document.querySelector('.music-btn').innerText = "♪ PAUSE MUSIC";
+      } else {
+        audio.pause();
+        document.querySelector('.music-btn').innerText = "♪ PLAY MUSIC";
+      }
+    }
+  </script>
+</body>
+</html>
